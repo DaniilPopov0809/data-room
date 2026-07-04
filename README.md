@@ -98,13 +98,15 @@ This prevents abandoned files from accumulating, for example if the browser tab 
 
 ### Supported Formats
 
-Currently, **only PDF files** are supported.
+The application supports **PDF files** and **images** (webp, png, jpg/jpeg, tiff).
 
 ### PDF Signature Validation
 
-The application validates not only the MIME type but also the **magic bytes** of each uploaded file.
+The application validates not only the MIME type but also the **magic bytes** of each uploaded PDF file.
 
 The first four bytes are checked against the PDF signature (`%PDF`, hex `25 50 44 46`), preventing files with a renamed `.pdf` extension from being accepted.
+
+Image files are validated using MIME type and file extension only — no magic-byte check is applied.
 
 ### File Size Limit
 
@@ -156,7 +158,7 @@ Dialogs are queued through `conflictStore`, with each dialog returning a `Promis
 ### Files
 
 - ✅ Upload via drag-and-drop or file picker
-- ✅ Built-in PDF preview
+- ✅ Built-in file preview (PDF via `<iframe>`, images via `<img>`)
 - ✅ Rename while preserving the file extension
 - ✅ Download via `URL.createObjectURL`
 - ✅ Delete files and clean up associated blobs in IndexedDB
@@ -165,7 +167,7 @@ Dialogs are queued through `conflictStore`, with each dialog returning a `Promis
 
 - ✅ Grid and list views
 - ✅ Sorting by name, last updated date, or file size (ascending/descending)
-- ✅ Filtering by type (all / folders / files)
+- ✅ Filtering by type (all / folders / files / images)
 - ✅ Option to keep folders on top or mixed with files
 - ✅ Clickable breadcrumb navigation
 - ✅ Right-click context menus
@@ -173,6 +175,7 @@ Dialogs are queued through `conflictStore`, with each dialog returning a `Promis
 - ✅ Toast notifications after every action
 - ✅ Long filenames displayed with `text-overflow: ellipsis` and tooltips
 - ✅ URL-synchronized UI state
+- ✅ Fully responsive layout — adapts to mobile, tablet, and desktop screens
 
 ---
 
@@ -202,7 +205,7 @@ src/
     useMediaQuery.ts
 
   lib/
-    nodeHelpers.ts     # getChildren, getDescendantIds, isPdf
+    nodeHelpers.ts     # getChildren, getDescendantIds, isPdf, isImage, isSupportedFile
     nameHelpers.ts     # validateName, resolveDuplicateName, splitExtension
     sortHelpers.ts     # sortNodes
     formatHelpers.ts   # formatFileSize, formatDate
@@ -211,6 +214,12 @@ src/
   types/
     dataRoom.ts        # FolderNode, FileNode, DataRoomNode, SortOption, ...
 ```
+
+### Why Not FSD / Feature-Based Architecture
+
+A feature-sliced design (FSD) or similar feature-based architecture would add significant structural overhead — `entities/`, `features/`, `widgets/`, `shared/` layers — that does not pay off for a project of this scope.
+
+The chosen structure groups code by **technical role** (`components/`, `hooks/`, `lib/`, `store/`, `db/`) rather than by feature slice. With a single domain (files and folders) and a small codebase, this keeps navigation straightforward and avoids premature abstraction.
 
 ---
 
@@ -245,7 +254,7 @@ interface FileNode extends BaseNode {
 | Scenario | Behavior |
 |----------|----------|
 | Duplicate filename during creation/upload | Automatically generates `name (1).pdf` |
-| Non-PDF upload | Error toast; file is skipped |
+| Non-PDF / non-image upload | Error toast; file is skipped |
 | Fake PDF extension | Rejected after magic-byte validation |
 | File larger than 3 MB | Error toast; file is skipped |
 | Deleting a folder with nested content | Confirmation dialog showing the exact number of affected items; recursive deletion |

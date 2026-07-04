@@ -24,13 +24,13 @@ export function Dropzone({ isEmpty = false }: DropzoneProps) {
         <div className="w-full h-full border-2 border-dashed border-primary rounded-3xl bg-card/95 flex flex-col items-center justify-center pointer-events-none shadow-xl">
           <UploadCloud className="size-16 animate-bounce text-primary mb-4" />
           <h3 className="text-xl font-semibold text-foreground mb-2">
-            Drop PDF files here to upload
+            Drop files here to upload
           </h3>
           <p className="text-sm text-primary/80">
             to <span className="font-medium underline">{folderName}</span>
           </p>
           <span className="mt-4 text-xs font-medium uppercase tracking-wider text-primary bg-primary/10 px-2.5 py-1 rounded-full border border-primary/30">
-            PDF Only
+            PDF · Images
           </span>
         </div>
       </div>
@@ -63,7 +63,7 @@ export function Dropzone({ isEmpty = false }: DropzoneProps) {
               isDragging ? "text-primary/80" : "text-muted-foreground",
             )}
           >
-            Create a folder, upload, or drag & drop PDF files here.
+            Create a folder, upload, or drag & drop PDF and image files here.
           </p>
         </div>
       </div>

@@ -3,7 +3,7 @@ import { toast } from "sonner"
 import { saveBlob, deleteBlob } from "@/db/blobStore"
 import { useDataRoomStore } from "@/store/dataRoomStore"
 import { useConflictStore } from "@/store/conflictStore"
-import { getChildren, isPdf } from "@/lib/nodeHelpers"
+import { getChildren, isSupportedFile } from "@/lib/nodeHelpers"
 import { normalizeName } from "@/lib/nameHelpers"
 import type { FileNode } from "@/types/dataRoom"
 
@@ -30,9 +30,9 @@ export const useFileUpload = (): { uploadFiles: (files: FileList | File[]) => Pr
           let blobId: string | null = null
 
           try {
-            const validPdf = await isPdf(file)
-            if (!validPdf) {
-              toast.error(`${file.name}: only PDF files are supported`)
+            const fileType = await isSupportedFile(file)
+            if (!fileType) {
+              toast.error(`${file.name}: only PDF and image files (webp, png, jpg, jpeg, tiff) are supported`)
               continue
             }
 

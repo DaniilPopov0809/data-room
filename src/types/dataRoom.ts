@@ -34,4 +34,4 @@ export type ViewMode = "list" | "grid"
 
 export type FoldersPosition = "top" | "bottom"
 
-export type TypeFilter = "all" | "folder" | "file"
+export type TypeFilter = "all" | "folder" | "file" | "image"

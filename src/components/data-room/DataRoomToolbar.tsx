@@ -28,7 +28,8 @@ const sortLabels: Record<SortOption, string> = {
 const filterLabels: Record<TypeFilter, string> = {
   all: "All",
   folder: "Folders",
-  file: "PDFs",
+  file: "Files",
+  image: "Images",
 }
 
 export function DataRoomToolbar() {
@@ -73,7 +74,10 @@ export function DataRoomToolbar() {
                   Folders
                 </DropdownMenuRadioItem>
                 <DropdownMenuRadioItem className="normal-case tracking-normal" value="file">
-                  PDFs
+                  Files
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem className="normal-case tracking-normal" value="image">
+                  Images
                 </DropdownMenuRadioItem>
               </DropdownMenuRadioGroup>
             </DropdownMenuContent>
@@ -154,7 +158,7 @@ export function DataRoomToolbar() {
                 disabled={isUploading}
               >
                 {isUploading ? <Loader2 className="animate-spin" /> : <Upload />}
-                PDF
+                Upload
               </Button>
             }
           />

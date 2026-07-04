@@ -29,7 +29,7 @@ const isValidSortOption = (value: string | null): value is SortOption => {
   return SORT_OPTIONS.includes(value as SortOption)
 }
 
-const VALID_TYPE_FILTERS: TypeFilter[] = ["all", "folder", "file"]
+const VALID_TYPE_FILTERS: TypeFilter[] = ["all", "folder", "file", "image"]
 
 const isValidTypeFilter = (value: string | null): value is TypeFilter => {
   return VALID_TYPE_FILTERS.includes(value as TypeFilter)

@@ -9,7 +9,7 @@ import type { DataRoomNode, FileNode } from "@/types/dataRoom"
 import { NodeMore } from "./NodeMore"
 import { NodeIcon } from "./NodeIcon"
 import { NodeMeta } from "./NodeMeta"
-import { PdfPreviewDialog } from "@/components/file/PdfPreviewDialog/PdfPreviewDialog"
+import { FilePreviewDialog } from "@/components/file/FilePreviewDialog/FilePreviewDialog"
 
 interface NodeItemProps {
   node: DataRoomNode
@@ -42,7 +42,7 @@ export const NodeItem = memo(function NodeItem({ node, viewMode }: NodeItemProps
                 onClick={openNode}
                 type="button"
               >
-                <NodeIcon type={node.type} size="size-8" />
+                <NodeIcon type={node.type} size="size-8" mimeType={node.type === "file" ? node.mimeType : undefined} />
                 <NodeName name={node.name} />
               </button>
 
@@ -55,7 +55,7 @@ export const NodeItem = memo(function NodeItem({ node, viewMode }: NodeItemProps
           </div>
         </NodeContextMenu>
         {node.type === "file" && (
-          <PdfPreviewDialog
+          <FilePreviewDialog
             key={node.id}
             node={node as FileNode}
             open={previewOpen}
@@ -81,7 +81,7 @@ export const NodeItem = memo(function NodeItem({ node, viewMode }: NodeItemProps
             onClick={openNode}
             type="button"
           >
-            <NodeIcon type={node.type} size="size-6" />
+            <NodeIcon type={node.type} size="size-6" mimeType={node.type === "file" ? node.mimeType : undefined} />
             <NodeName name={node.name} />
           </button>
 
@@ -100,7 +100,7 @@ export const NodeItem = memo(function NodeItem({ node, viewMode }: NodeItemProps
         </div>
       </NodeContextMenu>
       {node.type === "file" && (
-        <PdfPreviewDialog
+        <FilePreviewDialog
           key={node.id}
           node={node as FileNode}
           open={previewOpen}

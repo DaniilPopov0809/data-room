@@ -27,13 +27,13 @@ export function UploadButton({ trigger }: UploadButtonProps) {
       <input
         ref={inputRef}
         type="file"
-        accept="application/pdf"
+        accept="application/pdf,image/webp,image/png,image/jpeg,image/tiff"
         multiple
         disabled={isUploading}
         className="hidden"
         onChange={(event) => {
           if (event.target.files) {
-            void uploadFiles(event.target.files)
+            uploadFiles(event.target.files)
           }
           event.target.value = ""
         }}

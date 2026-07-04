@@ -1,8 +1,8 @@
 import { useMemo } from "react"
 import { useDataRoomStore } from "@/store/dataRoomStore"
-import { getChildren, getPath } from "@/lib/nodeHelpers"
+import { getChildren, getPath, SUPPORTED_IMAGE_MIME_TYPES } from "@/lib/nodeHelpers"
 import { sortNodes } from "@/lib/sortHelpers"
-import type { DataRoomNode } from "@/types/dataRoom"
+import type { DataRoomNode, FileNode } from "@/types/dataRoom"
 
 export const useCurrentFolder = (): {
   currentFolder: DataRoomNode | null
@@ -23,6 +23,10 @@ export const useCurrentFolder = (): {
       rawChildren = rawChildren.filter((n) => n.type === "folder")
     } else if (typeFilter === "file") {
       rawChildren = rawChildren.filter((n) => n.type === "file")
+    } else if (typeFilter === "image") {
+      rawChildren = rawChildren.filter(
+        (n) => n.type === "file" && SUPPORTED_IMAGE_MIME_TYPES.has((n as FileNode).mimeType),
+      )
     }
 
     const children: DataRoomNode[] = sortNodes(rawChildren, sortOption, foldersPosition)

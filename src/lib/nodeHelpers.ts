@@ -95,11 +95,38 @@ export const countDescendants = (
   )
 }
 
-export  const isPdf = async (file: File): Promise<boolean> => {
+export const isPdf = async (file: File): Promise<boolean> => {
   const isPdfExtension = file.name.toLowerCase().endsWith(".pdf")
   if (file.type !== "application/pdf" && !isPdfExtension) return false
   const buffer = await file.slice(0, 5).arrayBuffer()
   const bytes = new Uint8Array(buffer)
   const signature = String.fromCharCode(...bytes)
   return signature === "%PDF-"
+}
+
+export const SUPPORTED_IMAGE_EXTENSIONS: ReadonlySet<string> = new Set([
+  "webp",
+  "png",
+  "jpg",
+  "jpeg",
+  "tiff",
+  "tif",
+])
+
+export const SUPPORTED_IMAGE_MIME_TYPES: ReadonlySet<string> = new Set([
+  "image/webp",
+  "image/png",
+  "image/jpeg",
+  "image/tiff",
+])
+
+export const isImage = (file: File): boolean => {
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? ""
+  return SUPPORTED_IMAGE_MIME_TYPES.has(file.type) || SUPPORTED_IMAGE_EXTENSIONS.has(ext)
+}
+
+export const isSupportedFile = async (file: File): Promise<"pdf" | "image" | null> => {
+  if (await isPdf(file)) return "pdf"
+  if (isImage(file)) return "image"
+  return null
 }
