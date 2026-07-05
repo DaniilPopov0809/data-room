@@ -119,6 +119,7 @@ export function DataRoomSearch({ isMobileOpen, onMobileOpenChange }: DataRoomSea
               query={searchQuery}
               results={filteredNodes}
               onSelect={handleNodeClick}
+              className="max-h-72"
             />
           </div>
         )}
