@@ -53,7 +53,7 @@ export const useRenameNode = (node: DataRoomNode): UseRenameNodeReturn => {
       const siblings = getChildren(state.nodes, node.parentId)
       const duplicate = siblings.find(
         (s) =>
-          s.id !== node.id && s.type === "file" && s.normalizedName === normalizeName(finalName),
+          s.id !== node.id && s.type === "file" && normalizeName(s.name) === normalizeName(finalName),
       )
 
       if (duplicate) {
@@ -90,7 +90,13 @@ export const useRenameNode = (node: DataRoomNode): UseRenameNodeReturn => {
     handleOpenChange(false)
 
     if (updatedNode) {
-      toast.success(`${node.type === "folder" ? "Folder" : "File"} renamed`)
+      if (updatedNode.name !== finalName) {
+        toast.info(
+          `A ${node.type} with that name already exists. Renamed to "${updatedNode.name}"`,
+        )
+      } else {
+        toast.success(`${node.type === "folder" ? "Folder" : "File"} renamed`)
+      }
     }
   }
 

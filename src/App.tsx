@@ -1,17 +1,23 @@
 import { useEffect } from "react"
+
 import { DataRoomContainer } from "@/components/data-room/DataRoomContainer"
+import { ConflictDialog } from "@/components/file/ConflictDialog"
 import { AppLayout } from "@/components/layout/AppLayout"
 import ErrorBoundary from "@/components/layout/ErrorBoundary"
-import { ConflictDialog } from "@/components/file/ConflictDialog"
+import { useStorageInit } from "@/hooks/useStorageInit"
+import { useTabSync } from "@/hooks/useTabSync"
 import { useDataRoomStore } from "@/store/dataRoomStore"
 
 function App() {
   const runGarbageCollector = useDataRoomStore((state) => state.runGarbageCollector)
   const isHydrated = useDataRoomStore((state) => state.isHydrated)
 
+  useStorageInit()
+  useTabSync()
+
   useEffect(() => {
     if (isHydrated) {
-      void runGarbageCollector()
+      runGarbageCollector()
     }
   }, [isHydrated, runGarbageCollector])
 

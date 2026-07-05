@@ -1,13 +1,17 @@
 import { useMemo } from "react"
+
 import { useDataRoomStore } from "@/store/dataRoomStore"
 import { getChildren, getPath, SUPPORTED_IMAGE_MIME_TYPES } from "@/lib/nodeHelpers"
 import { sortNodes } from "@/lib/sortHelpers"
-import type { DataRoomNode, FileNode } from "@/types/dataRoom"
+import type { DataRoomNode, FileNode, TypeFilter } from "@/types/dataRoom"
 
 export const useCurrentFolder = (): {
   currentFolder: DataRoomNode | null
   children: DataRoomNode[]
   path: DataRoomNode[]
+  isFolderEmpty: boolean
+  isFilterEmpty: boolean
+  typeFilter: TypeFilter
 } => {
   const nodes = useDataRoomStore((state) => state.nodes)
   const currentFolderId = useDataRoomStore((state) => state.currentFolderId)
@@ -18,24 +22,29 @@ export const useCurrentFolder = (): {
   return useMemo(() => {
     const currentFolder: DataRoomNode | null = currentFolderId ? nodes[currentFolderId] : null
 
-    let rawChildren: DataRoomNode[] = getChildren(nodes, currentFolderId)
+    const allChildren: DataRoomNode[] = getChildren(nodes, currentFolderId)
+    let filteredChildren: DataRoomNode[] = allChildren
+
     if (typeFilter === "folder") {
-      rawChildren = rawChildren.filter((n) => n.type === "folder")
+      filteredChildren = filteredChildren.filter((n) => n.type === "folder")
     } else if (typeFilter === "file") {
-      rawChildren = rawChildren.filter((n) => n.type === "file")
+      filteredChildren = filteredChildren.filter((n) => n.type === "file")
     } else if (typeFilter === "image") {
-      rawChildren = rawChildren.filter(
+      filteredChildren = filteredChildren.filter(
         (n) => n.type === "file" && SUPPORTED_IMAGE_MIME_TYPES.has((n as FileNode).mimeType),
       )
     }
 
-    const children: DataRoomNode[] = sortNodes(rawChildren, sortOption, foldersPosition)
+    const children: DataRoomNode[] = sortNodes(filteredChildren, sortOption, foldersPosition)
     const path: DataRoomNode[] = getPath(nodes, currentFolderId)
 
     return {
       currentFolder,
       children,
       path,
+      isFolderEmpty: allChildren.length === 0,
+      isFilterEmpty: allChildren.length > 0 && filteredChildren.length === 0,
+      typeFilter,
     }
   }, [currentFolderId, nodes, sortOption, foldersPosition, typeFilter])
 }

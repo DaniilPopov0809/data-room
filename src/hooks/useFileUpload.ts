@@ -1,10 +1,16 @@
 import { useCallback } from "react"
 import { toast } from "sonner"
+
 import { saveBlob, deleteBlob } from "@/db/blobStore"
-import { useDataRoomStore } from "@/store/dataRoomStore"
-import { useConflictStore } from "@/store/conflictStore"
-import { getChildren, isSupportedFile } from "@/lib/nodeHelpers"
+import { getChildren, isEmptyFile, isSupportedFile } from "@/lib/nodeHelpers"
 import { normalizeName } from "@/lib/nameHelpers"
+import {
+  canStoreBytes,
+  getQuotaExceededMessage,
+  isQuotaExceededError,
+} from "@/lib/storageHelpers"
+import { useConflictStore } from "@/store/conflictStore"
+import { useDataRoomStore } from "@/store/dataRoomStore"
 import type { FileNode } from "@/types/dataRoom"
 
 const MAX_FILE_SIZE: number = 3 * 1024 * 1024 // 3 MB
@@ -25,14 +31,21 @@ export const useFileUpload = (): { uploadFiles: (files: FileList | File[]) => Pr
 
       setIsUploading(true)
 
+      const batchNormalizedNames = new Set<string>()
+
       try {
         for (const file of fileList) {
           let blobId: string | null = null
 
           try {
-            const fileType = await isSupportedFile(file)
-            if (!fileType) {
-              toast.error(`${file.name}: only PDF and image files (webp, png, jpg, jpeg, tiff) are supported`)
+            if (isEmptyFile(file)) {
+              toast.error(`${file.name}: file is empty (0 bytes)`)
+              continue
+            }
+
+            const fileCheck = await isSupportedFile(file)
+            if (fileCheck.ok === false) {
+              toast.error(`${file.name}: ${fileCheck.error}`)
               continue
             }
 
@@ -41,16 +54,24 @@ export const useFileUpload = (): { uploadFiles: (files: FileList | File[]) => Pr
               continue
             }
 
+            const quotaCheck = await canStoreBytes(file.size)
+            if (quotaCheck.ok === false) {
+              toast.error(`${file.name}: ${quotaCheck.error}`)
+              continue
+            }
+
             const state = useDataRoomStore.getState()
             const resolvedParentId = state.currentFolderId
             const siblings = getChildren(state.nodes, resolvedParentId)
+            const normalizedFileName = normalizeName(file.name)
             const duplicate = siblings.find(
-              (node) => node.type === "file" && node.normalizedName === normalizeName(file.name),
+              (node) => node.type === "file" && normalizeName(node.name) === normalizedFileName,
             )
+            const duplicateInBatch = batchNormalizedNames.has(normalizedFileName)
 
             let decision: "overwrite" | "copy" | "cancel" = "copy"
 
-            if (duplicate) {
+            if (duplicate || duplicateInBatch) {
               decision = await promptConflict(file.name)
             }
 
@@ -73,6 +94,8 @@ export const useFileUpload = (): { uploadFiles: (files: FileList | File[]) => Pr
                 throw new Error("Failed to update file metadata")
               }
 
+              batchNormalizedNames.add(normalizeName(updated.name))
+
               if (oldBlobId) {
                 try {
                   await deleteBlob(oldBlobId)
@@ -83,14 +106,15 @@ export const useFileUpload = (): { uploadFiles: (files: FileList | File[]) => Pr
 
               toast.success(`${file.name} overwritten`)
             } else {
-              addFile({
+              const createdFile = addFile({
                 name: file.name,
                 mimeType: file.type,
                 size: file.size,
                 blobId,
                 parentId: resolvedParentId,
               })
-              toast.success(`${file.name} uploaded`)
+              batchNormalizedNames.add(normalizeName(createdFile.name))
+              toast.success(`${createdFile.name} uploaded`)
             }
 
             blobId = null
@@ -99,9 +123,14 @@ export const useFileUpload = (): { uploadFiles: (files: FileList | File[]) => Pr
             if (blobId) {
               try {
                 await deleteBlob(blobId)
-              } catch (error) {
-                console.error("Failed to delete blob:", error)
+              } catch (cleanupError) {
+                console.error("Failed to delete blob:", cleanupError)
               }
+            }
+
+            if (isQuotaExceededError(error)) {
+              toast.error(`${file.name}: ${getQuotaExceededMessage()}`)
+              continue
             }
 
             toast.error(`${file.name}: upload failed`)

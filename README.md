@@ -144,6 +144,27 @@ When uploading a file whose name already exists in the current folder, a dialog 
 
 Dialogs are queued through `conflictStore`, with each dialog returning a `Promise<ConflictDecision>` that resolves only after user interaction.
 
+### Browser Storage Quota
+
+Individual files are limited to **3 MB**, but the browser also enforces a **total IndexedDB quota** per origin. Uploading many files close to that limit can cause `QuotaExceededError` on the next write — not necessarily on the file that exceeds 3 MB.
+
+Before each upload, `canStoreBytes()` in `lib/storageHelpers.ts` calls `navigator.storage.estimate()` and reserves **512 KB** of headroom for metadata. If there is not enough space, the upload is blocked with a clear toast. If IndexedDB still throws `QuotaExceededError` during `saveBlob`, the error is caught and surfaced explicitly instead of a generic failure message.
+
+### Private / Incognito Mode
+
+Some browsers (especially Safari) heavily restrict or block persistent IndexedDB in private browsing. On startup, `useStorageInit` runs `checkStorageAvailability()`:
+
+1. Tests read/write to `idb-keyval` (metadata).
+2. Tests the blob database via `testBlobDbAccess()`.
+
+If IndexedDB is completely unavailable, the app **degrades to session mode**: metadata and blobs are kept in memory (`configureMetadataStorage`, `setBlobStorageBackend`) without crashing. A **`StorageWarningBanner`** and a toast explain that changes may be lost when the tab is closed.
+
+### Multiple Open Tabs
+
+If the app is open in two tabs, both write to IndexedDB independently while each tab's Zustand state only knows about its own changes — a classic race condition (e.g. a file deleted in one tab still appears in the other until reload).
+
+`useTabSync` addresses this via **`BroadcastChannel`**: when metadata changes in one tab, other tabs re-read persisted state through `rehydrateFromStorage()`. Sync also runs when a tab regains focus (`visibilitychange`). If data actually changed, the user sees a toast: *"Data was updated in another tab"*. Broadcast is debounced (200 ms) so the persist write to `idb-keyval` completes before other tabs read.
+
 ---
 
 ## Features
@@ -188,7 +209,7 @@ src/
     file/         # upload, dropzone, PDF preview
     folder/       # create folder dialog
     node/         # card, context menu, rename/delete dialogs
-    layout/       # AppShell, ErrorBoundary
+    layout/       # AppShell, ErrorBoundary, StorageWarningBanner
 
   store/
     dataRoomStore.ts   # metadata + UI state (Zustand + idb-keyval)
@@ -201,6 +222,8 @@ src/
     useCurrentFolder.ts
     useFileUpload.ts
     useUrlSync.ts
+    useStorageInit.ts  # storage availability check on startup
+    useTabSync.ts      # cross-tab metadata sync
     useDebounce.ts
     useMediaQuery.ts
 
@@ -210,6 +233,8 @@ src/
     sortHelpers.ts     # sortNodes
     formatHelpers.ts   # formatFileSize, formatDate
     downloadHelper.ts  # downloadNode
+    storageHelpers.ts  # quota estimate, incognito detection, QuotaExceededError
+    tabSyncHelpers.ts  # BroadcastChannel helpers
 
   types/
     dataRoom.ts        # FolderNode, FileNode, DataRoomNode, SortOption, ...
@@ -255,12 +280,22 @@ interface FileNode extends BaseNode {
 |----------|----------|
 | Duplicate filename during creation/upload | Automatically generates `name (1).pdf` |
 | Non-PDF / non-image upload | Error toast; file is skipped |
-| Fake PDF extension | Rejected after magic-byte validation |
+| Fake PDF extension | Rejected after magic-byte (`%PDF`) + EOF marker (`%%EOF`) validation |
 | File larger than 3 MB | Error toast; file is skipped |
+| Empty file (0 bytes) | Caught by `isEmptyFile()` before any other check; error toast |
+| Corrupted PDF with valid signature | `%PDF` header + `%%EOF` tail both checked; browser iframe shows a render error if content is truncated |
 | Deleting a folder with nested content | Confirmation dialog showing the exact number of affected items; recursive deletion |
 | Empty or whitespace-only names | Validation prevents confirmation |
 | Name longer than 255 characters | Validation error |
 | Renaming to an existing name | Automatic duplicate resolution |
+| Case-only rename (`Report` → `report`) | Current node excluded from duplicate check via `ignoreNodeId`; rename succeeds without a false conflict |
+| Unicode / emoji / RTL in names | `NFKC` normalization + `toLocaleLowerCase(navigator.language)` for comparisons; `localeCompare` with `sensitivity: "base"` for sorting |
+| Two files with the same name in one batch upload | Each file is checked against `batchNormalizedNames` Set in addition to existing siblings; conflict dialog shown before either file is written |
 | Invalid `folderId` in the URL after reload | Falls back to the root folder |
+| Back/Forward navigation to a deleted folder | `popstate` handler re-reads the URL; deleted folder ID fails the `node.type === "folder"` check and falls back to root |
 | One file fails during multi-file upload | Remaining files continue uploading |
 | Browser tab closed during upload | Garbage collector removes orphaned blobs on the next application startup |
+| Total browser storage quota nearly full | `navigator.storage.estimate()` checked before upload; clear toast if space is insufficient; `QuotaExceededError` handled explicitly |
+| Private / incognito browsing | Storage availability tested on startup; warning banner + toast; fallback to in-memory session mode if IndexedDB is blocked |
+| Two tabs open simultaneously | `BroadcastChannel` syncs metadata across tabs; rehydrate on focus; toast when another tab changed data |
+| Active filter yields no results | Distinct `empty-filter` empty state shown instead of `empty-folder`; text explains the filter is the cause |

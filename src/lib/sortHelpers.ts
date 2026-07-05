@@ -1,11 +1,8 @@
+import { compareLocalizedNames } from "@/lib/localeHelpers"
 import type { DataRoomNode, SortOption, FoldersPosition } from "@/types/dataRoom"
 
 const getNodeSize = (node: DataRoomNode): number => {
   return node.type === "file" ? node.size : 0
-}
-
-const compareNames = (left: string, right: string): number => {
-  return left.localeCompare(right, undefined, { sensitivity: "base", numeric: true })
 }
 
 const compareAsc = (left: number, right: number): number => {
@@ -32,22 +29,30 @@ export const sortNodes = (
 
     switch (sortOption) {
       case "name-desc":
-        return compareNames(right.name, left.name)
+        return compareLocalizedNames(right.name, left.name)
       case "updated-desc":
-        return compareDesc(left.updatedAt, right.updatedAt) || compareNames(left.name, right.name)
+        return (
+          compareDesc(left.updatedAt, right.updatedAt) ||
+          compareLocalizedNames(left.name, right.name)
+        )
       case "updated-asc":
-        return compareAsc(left.updatedAt, right.updatedAt) || compareNames(left.name, right.name)
+        return (
+          compareAsc(left.updatedAt, right.updatedAt) ||
+          compareLocalizedNames(left.name, right.name)
+        )
       case "size-desc":
         return (
-          compareDesc(getNodeSize(left), getNodeSize(right)) || compareNames(left.name, right.name)
+          compareDesc(getNodeSize(left), getNodeSize(right)) ||
+          compareLocalizedNames(left.name, right.name)
         )
       case "size-asc":
         return (
-          compareAsc(getNodeSize(left), getNodeSize(right)) || compareNames(left.name, right.name)
+          compareAsc(getNodeSize(left), getNodeSize(right)) ||
+          compareLocalizedNames(left.name, right.name)
         )
       case "name-asc":
       default:
-        return compareNames(left.name, right.name)
+        return compareLocalizedNames(left.name, right.name)
     }
   })
 }

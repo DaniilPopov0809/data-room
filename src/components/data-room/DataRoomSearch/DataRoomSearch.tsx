@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { useDebounce } from "@/hooks/useDebounce"
 import { useMediaQuery } from "@/hooks/useMediaQuery"
+import { matchesSearchQuery } from "@/lib/localeHelpers"
 import { useDataRoomStore } from "@/store/dataRoomStore"
 import type { DataRoomNode, FileNode } from "@/types/dataRoom"
 import { Search } from "lucide-react"
@@ -62,13 +63,13 @@ export function DataRoomSearch({ isMobileOpen, onMobileOpenChange }: DataRoomSea
     }
   }, [isMobileOpen])
 
-  const normalizedQuery = debouncedSearchQuery.trim().toLowerCase()
+  const trimmedQuery = debouncedSearchQuery.trim()
   const filteredNodes = useMemo(() => {
-    if (!normalizedQuery) return []
+    if (!trimmedQuery) return []
     return Object.values(nodes)
-      .filter((node) => node.name.toLowerCase().includes(normalizedQuery))
+      .filter((node) => matchesSearchQuery(node.name, trimmedQuery))
       .slice(0, 10)
-  }, [nodes, normalizedQuery])
+  }, [nodes, trimmedQuery])
 
   const hasQuery: boolean = searchQuery.trim().length > 0
 

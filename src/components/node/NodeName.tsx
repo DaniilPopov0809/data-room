@@ -9,10 +9,12 @@ export function NodeName({ name, className = "truncate text-sm font-medium" }: N
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className={className}>{name}</span>
+        <span dir="auto" className={className}>
+          {name}
+        </span>
       </TooltipTrigger>
       <TooltipContent side="top" className="max-w-xs break-words">
-        {name}
+        <span dir="auto">{name}</span>
       </TooltipContent>
     </Tooltip>
   )

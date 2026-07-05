@@ -41,8 +41,12 @@ export function DataRoomSearchResult({ nodes, query, results, onSelect, classNam
                 <FileText className="size-5 shrink-0 text-destructive" />
               )}
               <div className="min-w-0">
-                <div className="truncate text-sm font-medium text-foreground">{node.name}</div>
-                <div className="truncate text-xs text-muted-foreground">{pathString}</div>
+                <div className="truncate text-sm font-medium text-foreground" dir="auto">
+                  {node.name}
+                </div>
+                <div className="truncate text-xs text-muted-foreground" dir="auto">
+                  {pathString}
+                </div>
               </div>
             </div>
             {node.type === "file" && (

@@ -1,7 +1,10 @@
 import type { FileNode } from "@/types/dataRoom"
 import { toast } from "sonner"
 import { useEffect, useRef, useState } from "react"
+
 import { getBlob } from "@/db/blobStore"
+import { validatePdfBlob } from "@/lib/pdfHelpers"
+
 import { revokeObjectUrl } from "./helpers"
 
 interface UsePdfPreloadParams {
@@ -59,6 +62,15 @@ export const usePdfPreload = ({
         if (!active) return
 
         if (blob) {
+          const validation = await validatePdfBlob(blob)
+          if (!active) return
+
+          if (validation.ok === false) {
+            toast.error(`${currentNode.name}: ${validation.error}`)
+            setError(validation.error)
+            return
+          }
+
           const pdfBlob = new Blob([blob], { type: "application/pdf" })
           const objectUrl = URL.createObjectURL(pdfBlob)
           objectUrlRef.current = objectUrl

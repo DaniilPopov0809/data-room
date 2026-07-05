@@ -1,13 +1,19 @@
-import { Loader2, UploadCloud, FolderOpen } from "lucide-react"
+import { Filter, FolderOpen, Loader2, UploadCloud } from "lucide-react"
+
 import { cn } from "@/lib/utils"
+
 import { useDropzone } from "./useDropzone"
 
+export type DropzoneEmptyState = "empty-folder" | "empty-filter"
 interface DropzoneProps {
-  isEmpty?: boolean
+  emptyState?: DropzoneEmptyState | null
+  filterLabel?: string | null
 }
 
-export function Dropzone({ isEmpty = false }: DropzoneProps) {
-  const { isDragging, isUploading, folderName } = useDropzone();
+export function Dropzone({ emptyState = null, filterLabel = null }: DropzoneProps) {
+  const { isDragging, isUploading, folderName } = useDropzone()
+
+  const isEmpty: boolean = emptyState !== null
 
   if (isUploading) {
     return (
@@ -37,7 +43,25 @@ export function Dropzone({ isEmpty = false }: DropzoneProps) {
     )
   }
 
-  if (isEmpty) {
+  if (emptyState === "empty-filter") {
+    return (
+      <div className="flex min-h-90 flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-border bg-background p-6 text-center">
+        <div className="flex size-16 items-center justify-center rounded-full bg-accent">
+          <Filter className="size-8 text-primary" />
+        </div>
+        <div className="max-w-sm space-y-1">
+          <h2 className="text-xl font-medium text-foreground">
+            No {filterLabel?.toLowerCase() ?? "items"} match this filter
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Try changing the type filter or upload new files to this folder.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  if (emptyState === "empty-folder") {
     return (
       <div
         className={cn(

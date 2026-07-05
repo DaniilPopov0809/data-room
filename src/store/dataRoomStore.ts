@@ -1,16 +1,8 @@
 import { create } from "zustand"
 import { createJSONStorage, persist, type StateStorage } from "zustand/middleware"
 import { del, get, set } from "idb-keyval"
+
 import { getAllBlobIds, deleteBlobs } from "@/db/blobStore"
-import type {
-  DataRoomNode,
-  FileNode,
-  FolderNode,
-  SortOption,
-  ViewMode,
-  FoldersPosition,
-  TypeFilter,
-} from "@/types/dataRoom"
 import { getChildren, getDescendantIds } from "@/lib/nodeHelpers"
 import {
   normalizeName,
@@ -18,66 +10,60 @@ import {
   splitExtension,
   validateName,
 } from "@/lib/nameHelpers"
+import { getPersistedSnapshot, hasPersistedSliceChanged, isQuotaExceededError, isValidFolderId, readPersistedSlice } from "@/lib/storageHelpers"
+import type { DataRoomNode, FileNode, FolderNode } from "@/types/dataRoom"
+import type { DataRoomState } from "@/types/store"
 
-interface DataRoomState {
-  nodes: Record<string, DataRoomNode>
-  currentFolderId: string | null
-  sortOption: SortOption
-  viewMode: ViewMode
-  foldersPosition: FoldersPosition
-  typeFilter: TypeFilter
-  isHydrated: boolean
-  isUploading: boolean
-  setCurrentFolderId: (folderId: string | null) => void
-  setSortOption: (sortOption: SortOption) => void
-  setViewMode: (viewMode: ViewMode) => void
-  setFoldersPosition: (foldersPosition: FoldersPosition) => void
-  setTypeFilter: (typeFilter: TypeFilter) => void
-  setHydrated: (isHydrated: boolean) => void
-  setIsUploading: (isUploading: boolean) => void
-  createFolder: (name: string, parentId?: string | null) => FolderNode
-  addFile: (file: {
-    name: string
-    parentId?: string | null
-    mimeType: string
-    size: number
-    blobId: string
-  }) => FileNode
-  renameNode: (nodeId: string, name: string) => DataRoomNode | undefined
-  deleteNode: (nodeId: string) => DataRoomNode[]
-  runGarbageCollector: () => Promise<void>
-  overwriteFile: (
-    nodeId: string,
-    updates: {
-      mimeType: string
-      size: number
-      blobId: string
-    }
-  ) => FileNode | undefined
-  renameOverwriteNode: (
-    sourceId: string,
-    targetId: string,
-    name: string
-  ) => DataRoomNode | undefined
+export const PERSIST_KEY = "data-room-metadata"
+  
+let persistDisabled = false
+let memoryPersistValue: string | null = null
+
+export const configureMetadataStorage = (options: { disablePersist: boolean }): void => {
+  persistDisabled = options.disablePersist
 }
 
 const metadataStorage: StateStorage = {
-  getItem: async (name) => (await get<string>(name)) ?? null,
+  getItem: async (name) => {
+    if (memoryPersistValue !== null) {
+      return memoryPersistValue
+    }
+
+    try {
+      return (await get<string>(name)) ?? null
+    } catch (error) {
+      console.error("[Storage] Failed to read metadata:", error)
+      return null
+    }
+  },
   setItem: async (name, value) => {
-    await set(name, value)
+    if (persistDisabled) {
+      memoryPersistValue = value
+      return
+    }
+
+    try {
+      await set(name, value)
+    } catch (error) {
+      if (isQuotaExceededError(error)) {
+        console.error("[Storage] Metadata quota exceeded:", error)
+        throw error
+      }
+
+      console.error("[Storage] Falling back to in-memory metadata:", error)
+      persistDisabled = true
+      memoryPersistValue = value
+    }
   },
   removeItem: async (name) => {
-    await del(name)
+    memoryPersistValue = null
+
+    try {
+      await del(name)
+    } catch (error) {
+      console.error("[Storage] Failed to remove metadata:", error)
+    }
   },
-}
-
-function isValidFolderId(nodes: Record<string, DataRoomNode>, folderId: string | null) {
-  if (!folderId) {
-    return true
-  }
-
-  const node = nodes[folderId]
-  return Boolean(node && node.type === "folder")
 }
 
 export const useDataRoomStore = create<DataRoomState>()(
@@ -91,6 +77,9 @@ export const useDataRoomStore = create<DataRoomState>()(
       typeFilter: "all",
       isHydrated: false,
       isUploading: false,
+      storageMode: "persistent",
+      storageWarning: null,
+      canUseIndexedDb: true,
       setCurrentFolderId: (folderId) => setState({ currentFolderId: folderId }),
       setSortOption: (sortOption) => setState({ sortOption }),
       setViewMode: (viewMode) => setState({ viewMode }),
@@ -98,9 +87,59 @@ export const useDataRoomStore = create<DataRoomState>()(
       setTypeFilter: (typeFilter) => setState({ typeFilter }),
       setHydrated: (isHydrated) => setState({ isHydrated }),
       setIsUploading: (isUploading) => setState({ isUploading }),
+      setStorageAvailability: (availability) =>
+        setState({
+          storageMode: availability.mode,
+          storageWarning: availability.warning,
+          canUseIndexedDb: availability.canUseIndexedDb,
+        }),
+      rehydrateFromStorage: async () => {
+        const current = getState()
+        const currentSnapshot = getPersistedSnapshot(current)
+
+        let raw: string | null = memoryPersistValue
+
+        if (raw === null) {
+          try {
+            raw = (await get<string>(PERSIST_KEY)) ?? null
+          } catch (error) {
+            console.error("[Storage] Failed to rehydrate metadata:", error)
+            return false
+          }
+        }
+
+        if (!raw) {
+          return false
+        }
+
+        const incoming = readPersistedSlice(raw)
+
+        if (!incoming) {
+          return false
+        }
+
+        if (!hasPersistedSliceChanged(currentSnapshot, incoming)) {
+          return false
+        }
+
+        if (!isValidFolderId(incoming.nodes, incoming.currentFolderId)) {
+          incoming.currentFolderId = null
+        }
+
+        setState({
+          nodes: incoming.nodes,
+          currentFolderId: incoming.currentFolderId,
+          sortOption: incoming.sortOption,
+          viewMode: incoming.viewMode,
+          foldersPosition: incoming.foldersPosition,
+          typeFilter: incoming.typeFilter,
+        })
+
+        return true
+      },
       createFolder: (name, parentId) => {
         const validation = validateName(name)
-        if (!validation.ok) {
+        if (validation.ok === false) {
           throw new Error(validation.error)
         }
 
@@ -124,7 +163,7 @@ export const useDataRoomStore = create<DataRoomState>()(
       },
       addFile: (file) => {
         const validation = validateName(file.name)
-        if (!validation.ok) {
+        if (validation.ok === false) {
           throw new Error(validation.error)
         }
 
@@ -153,7 +192,7 @@ export const useDataRoomStore = create<DataRoomState>()(
       },
       renameNode: (nodeId, name) => {
         const validation = validateName(name)
-        if (!validation.ok) {
+        if (validation.ok === false) {
           throw new Error(validation.error)
         }
 
@@ -247,8 +286,8 @@ export const useDataRoomStore = create<DataRoomState>()(
       },
       renameOverwriteNode: (sourceId, targetId, name) => {
         const validation = validateName(name)
-        if (!validation.ok) {
-          throw new Error(validation.error) 
+        if (validation.ok === false) {
+          throw new Error(validation.error)
         }
 
         const state: DataRoomState = getState()
@@ -276,7 +315,7 @@ export const useDataRoomStore = create<DataRoomState>()(
       },
     }),
     {
-      name: "data-room-metadata",
+      name: PERSIST_KEY,
       storage: createJSONStorage(() => metadataStorage),
       partialize: (state) => ({
         nodes: state.nodes,

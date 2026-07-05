@@ -33,10 +33,10 @@ export function DataRoomBreadcrumbs() {
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               {index === path.length - 1 ? (
-                <BreadcrumbPage>{node.name}</BreadcrumbPage>
+                <BreadcrumbPage dir="auto">{node.name}</BreadcrumbPage>
               ) : (
                 <BreadcrumbLink asChild>
-                  <button onClick={() => setCurrentFolderId(node.id)} type="button">
+                  <button dir="auto" onClick={() => setCurrentFolderId(node.id)} type="button">
                     {node.name}
                   </button>
                 </BreadcrumbLink>

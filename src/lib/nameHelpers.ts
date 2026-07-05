@@ -1,9 +1,10 @@
+import { normalizeForComparison } from "@/lib/localeHelpers"
 import type { DataRoomNode } from "@/types/dataRoom"
 
 const MAX_NAME_LENGTH: number = 255
 
 export const normalizeName = (name: string): string => {
-  return name.trim().toLowerCase()
+  return normalizeForComparison(name)
 }
 
 export const validateName = (
@@ -41,7 +42,7 @@ export const resolveDuplicateName = (
   ignoreNodeId?: string,
 ): string => {
   const siblingNames: Set<string> = new Set(
-    siblings.filter((node) => node.id !== ignoreNodeId).map((node) => node.normalizedName),
+    siblings.filter((node) => node.id !== ignoreNodeId).map((node) => normalizeName(node.name)),
   )
 
   if (!siblingNames.has(normalizeName(name))) {
