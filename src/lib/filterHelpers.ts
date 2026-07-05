@@ -1,6 +1,7 @@
 import type { TypeFilter } from "@/types/dataRoom"
 
-const FILTER_LABELS: Record<Exclude<TypeFilter, "all">, string> = {
+export const FILTER_LABELS: Record<TypeFilter, string> = {
+  all: "All",
   folder: "Folders",
   file: "Files",
   image: "Images",

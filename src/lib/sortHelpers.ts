@@ -1,6 +1,15 @@
 import { compareLocalizedNames } from "@/lib/localeHelpers"
 import type { DataRoomNode, SortOption, FoldersPosition } from "@/types/dataRoom"
 
+export const SORT_LABELS: Record<SortOption, string> = {
+  "name-asc": "Name (A-Z)",
+  "name-desc": "Name (Z-A)",
+  "updated-desc": "Updated (Newest)",
+  "updated-asc": "Updated (Oldest)",
+  "size-desc": "Size (Largest)",
+  "size-asc": "Size (Smallest)",
+}
+
 const getNodeSize = (node: DataRoomNode): number => {
   return node.type === "file" ? node.size : 0
 }

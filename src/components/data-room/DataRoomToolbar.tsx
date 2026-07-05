@@ -15,22 +15,9 @@ import { DataRoomBreadcrumbs } from "./DataRoomBreadcrumbs"
 import { DataRoomView } from "./DataRoomView"
 import { useDataRoomStore } from "@/store/dataRoomStore"
 import type { SortOption, TypeFilter } from "@/types/dataRoom"
+import { FILTER_LABELS } from "@/lib/filterHelpers"
+import { SORT_LABELS } from "@/lib/sortHelpers"
 
-const sortLabels: Record<SortOption, string> = {
-  "name-asc": "Name (A-Z)",
-  "name-desc": "Name (Z-A)",
-  "updated-desc": "Last updated (Newest)",
-  "updated-asc": "Last updated (Oldest)",
-  "size-desc": "Size (Largest)",
-  "size-asc": "Size (Smallest)",
-}
-
-const filterLabels: Record<TypeFilter, string> = {
-  all: "All",
-  folder: "Folders",
-  file: "Files",
-  image: "Images",
-}
 
 export function DataRoomToolbar() {
   const isUploading = useDataRoomStore((state) => state.isUploading)
@@ -41,8 +28,8 @@ export function DataRoomToolbar() {
   const typeFilter = useDataRoomStore((state) => state.typeFilter)
   const setTypeFilter = useDataRoomStore((state) => state.setTypeFilter)
 
-  const currentLabel: string = sortLabels[sortOption] || "Sort"
-  const currentFilterLabel: string = filterLabels[typeFilter] || "All"
+  const currentLabel: string = SORT_LABELS[sortOption] || "Sort"
+  const currentFilterLabel: string = FILTER_LABELS[typeFilter] || "All"
 
   return (
     <div className="space-y-4">
@@ -67,18 +54,15 @@ export function DataRoomToolbar() {
                 value={typeFilter}
                 onValueChange={(value) => setTypeFilter(value as TypeFilter)}
               >
-                <DropdownMenuRadioItem className="normal-case tracking-normal" value="all">
-                  All
-                </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem className="normal-case tracking-normal" value="folder">
-                  Folders
-                </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem className="normal-case tracking-normal" value="file">
-                  Files
-                </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem className="normal-case tracking-normal" value="image">
-                  Images
-                </DropdownMenuRadioItem>
+                {(Object.keys(FILTER_LABELS) as TypeFilter[]).map((key) => (
+                  <DropdownMenuRadioItem
+                    key={key}
+                    className="normal-case tracking-normal"
+                    value={key}
+                  >
+                    {FILTER_LABELS[key]}
+                  </DropdownMenuRadioItem>
+                ))}
               </DropdownMenuRadioGroup>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -99,24 +83,15 @@ export function DataRoomToolbar() {
                 value={sortOption}
                 onValueChange={(value) => setSortOption(value as SortOption)}
               >
-                <DropdownMenuRadioItem className="normal-case tracking-normal" value="name-asc">
-                  Name (A-Z)
-                </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem className="normal-case tracking-normal" value="name-desc">
-                  Name (Z-A)
-                </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem className="normal-case tracking-normal" value="updated-desc">
-                  Last updated (Newest)
-                </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem className="normal-case tracking-normal" value="updated-asc">
-                  Last updated (Oldest)
-                </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem className="normal-case tracking-normal" value="size-desc">
-                  Size (Largest)
-                </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem className="normal-case tracking-normal" value="size-asc">
-                  Size (Smallest)
-                </DropdownMenuRadioItem>
+                {(Object.keys(SORT_LABELS) as SortOption[]).map((key) => (
+                  <DropdownMenuRadioItem
+                    key={key}
+                    className="normal-case tracking-normal"
+                    value={key}
+                  >
+                    {SORT_LABELS[key]}
+                  </DropdownMenuRadioItem>
+                ))}
               </DropdownMenuRadioGroup>
 
               <DropdownMenuSeparator />
@@ -142,10 +117,7 @@ export function DataRoomToolbar() {
         <div className="flex items-center gap-2">
           <CreateFolderDialog
             trigger={
-              <Button
-                className="flex-1 normal-case tracking-normal md:flex-none"
-                variant="outline"
-              >
+              <Button className="flex-1 normal-case tracking-normal md:flex-none" variant="outline">
                 <Plus />
                 Folder
               </Button>
