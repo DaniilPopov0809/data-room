@@ -16,13 +16,14 @@ import { useDeleteNode } from "./useDeleteNode"
 interface DeleteNodeDialogProps {
   node: DataRoomNode
   trigger: ReactElement
+  onCloseMenu?: () => void
 }
 
-export function DeleteNodeDialog({ node, trigger }: DeleteNodeDialogProps) {
+export function DeleteNodeDialog({ node, trigger, onCloseMenu }: DeleteNodeDialogProps) {
   const { counts, confirmDelete } = useDeleteNode(node)
 
   return (
-    <AlertDialog>
+    <AlertDialog onOpenChange={(open) => { if (!open) onCloseMenu?.() }}>
       <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -35,7 +36,7 @@ export function DeleteNodeDialog({ node, trigger }: DeleteNodeDialogProps) {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={() => void confirmDelete()}>Delete</AlertDialogAction>
+          <AlertDialogAction onClick={() => confirmDelete()}>Delete</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

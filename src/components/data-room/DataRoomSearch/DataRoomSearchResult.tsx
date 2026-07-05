@@ -2,7 +2,7 @@ import { formatFileSize } from "@/lib/formatHelpers"
 import { getPath } from "@/lib/nodeHelpers"
 import { cn } from "@/lib/utils"
 import type { DataRoomNode } from "@/types/dataRoom"
-import { FileText, Folder } from "lucide-react"
+import { NodeIcon } from "@/components/node/NodeIcon"
 
 interface DataRoomSearchResultProps {
   nodes: Record<string, DataRoomNode>
@@ -35,11 +35,11 @@ export function DataRoomSearchResult({ nodes, query, results, onSelect, classNam
             type="button"
           >
             <div className="flex min-w-0 items-center gap-3">
-              {node.type === "folder" ? (
-                <Folder className="size-5 shrink-0 fill-foreground text-foreground" />
-              ) : (
-                <FileText className="size-5 shrink-0 text-destructive" />
-              )}
+              <NodeIcon
+                type={node.type}
+                size="size-5"
+                mimeType={node.type === "file" ? node.mimeType : undefined}
+              />
               <div className="min-w-0">
                 <div className="truncate text-sm font-medium text-foreground" dir="auto">
                   {node.name}

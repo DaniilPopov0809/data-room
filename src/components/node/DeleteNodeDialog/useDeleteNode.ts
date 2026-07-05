@@ -10,7 +10,9 @@ interface useDeleteNodeReturn {
   confirmDelete: () => void
 }
 
-export const useDeleteNode = (node: DataRoomNode): useDeleteNodeReturn => {
+export const useDeleteNode = (
+  node: DataRoomNode,
+): useDeleteNodeReturn => {
   const nodes = useDataRoomStore((state) => state.nodes)
   const deleteNode = useDataRoomStore((state) => state.deleteNode)
   const counts: { folders: number; files: number } | null = useMemo(

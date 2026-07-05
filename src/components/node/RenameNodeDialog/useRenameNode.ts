@@ -17,7 +17,10 @@ interface UseRenameNodeReturn {
   confirmRenameNode: () => Promise<void>
 }
 
-export const useRenameNode = (node: DataRoomNode): UseRenameNodeReturn => {
+export const useRenameNode = (
+  node: DataRoomNode,
+  onCloseMenu?: () => void,
+): UseRenameNodeReturn => {
   const renameNode = useDataRoomStore((state) => state.renameNode)
   const renameOverwriteNode = useDataRoomStore((state) => state.renameOverwriteNode)
   const promptConflict = useConflictStore((state) => state.promptConflict)
@@ -31,6 +34,8 @@ export const useRenameNode = (node: DataRoomNode): UseRenameNodeReturn => {
     setIsOpen(nextOpen)
     if (nextOpen) {
       setNodeName(getBaseName(node))
+    } else {
+      onCloseMenu?.()
     }
   }
 
@@ -53,7 +58,9 @@ export const useRenameNode = (node: DataRoomNode): UseRenameNodeReturn => {
       const siblings = getChildren(state.nodes, node.parentId)
       const duplicate = siblings.find(
         (s) =>
-          s.id !== node.id && s.type === "file" && normalizeName(s.name) === normalizeName(finalName),
+          s.id !== node.id &&
+          s.type === "file" &&
+          normalizeName(s.name) === normalizeName(finalName),
       )
 
       if (duplicate) {
@@ -91,9 +98,7 @@ export const useRenameNode = (node: DataRoomNode): UseRenameNodeReturn => {
 
     if (updatedNode) {
       if (updatedNode.name !== finalName) {
-        toast.info(
-          `A ${node.type} with that name already exists. Renamed to "${updatedNode.name}"`,
-        )
+        toast.info(`A ${node.type} with that name already exists. Renamed to "${updatedNode.name}"`)
       } else {
         toast.success(`${node.type === "folder" ? "Folder" : "File"} renamed`)
       }

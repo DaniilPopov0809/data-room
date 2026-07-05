@@ -6,6 +6,7 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu"
+import { useMenuDialog } from "@/hooks/useMenuDialog"
 import type { DataRoomNode } from "@/types/dataRoom"
 
 interface NodeContextMenuProps {
@@ -14,11 +15,18 @@ interface NodeContextMenuProps {
 }
 
 export function NodeContextMenu({ node, children }: NodeContextMenuProps) {
+  const { isOpen, handleOpenChange, handleBeforeDialogOpen, handleCloseMenu } = useMenuDialog()
+
   return (
-    <ContextMenu>
+    <ContextMenu open={isOpen} onOpenChange={handleOpenChange}>
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
       <ContextMenuContent>
-        <NodeActionItems node={node} Item={ContextMenuItem} />
+        <NodeActionItems
+          node={node}
+          Item={ContextMenuItem}
+          onBeforeDialogOpen={handleBeforeDialogOpen}
+          onCloseMenu={handleCloseMenu}
+        />
       </ContextMenuContent>
     </ContextMenu>
   )

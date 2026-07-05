@@ -16,11 +16,12 @@ import { useRenameNode } from "./useRenameNode"
 interface RenameNodeDialogProps {
   node: DataRoomNode
   trigger: ReactElement
+  onCloseMenu?: () => void
 }
 
-export function RenameNodeDialog({ node, trigger }: RenameNodeDialogProps) {
+export function RenameNodeDialog({ node, trigger, onCloseMenu }: RenameNodeDialogProps) {
   const { isOpen, nodeName, setNodeName, validation, handleOpenChange, confirmRenameNode } =
-    useRenameNode(node)
+    useRenameNode(node, onCloseMenu)
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -49,7 +50,9 @@ export function RenameNodeDialog({ node, trigger }: RenameNodeDialogProps) {
               </span>
             )}
           </div>
-          {!validation.ok && <p className="text-sm text-destructive">{validation.error}</p>}
+          {validation.ok === false && (
+            <p className="text-sm text-destructive">{validation.error}</p>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => handleOpenChange(false)}>

@@ -15,9 +15,16 @@ interface MenuItemProps {
 interface NodeActionItemsProps {
   node: DataRoomNode
   Item: ComponentType<MenuItemProps>
+  onBeforeDialogOpen?: () => void
+  onCloseMenu?: () => void
 }
 
-export function NodeActionItems({ node, Item }: NodeActionItemsProps): ReactElement {
+export function NodeActionItems({
+  node,
+  Item,
+  onBeforeDialogOpen,
+  onCloseMenu,
+}: NodeActionItemsProps): ReactElement {
   return (
     <>
       {node.type === "file" && (
@@ -28,8 +35,14 @@ export function NodeActionItems({ node, Item }: NodeActionItemsProps): ReactElem
       )}
       <RenameNodeDialog
         node={node}
+        onCloseMenu={onCloseMenu}
         trigger={
-          <Item onSelect={(event) => event.preventDefault()}>
+          <Item
+            onSelect={(event) => {
+              event.preventDefault()
+              onBeforeDialogOpen?.()
+            }}
+          >
             <Pencil className="size-4" />
             Rename
           </Item>
@@ -37,10 +50,14 @@ export function NodeActionItems({ node, Item }: NodeActionItemsProps): ReactElem
       />
       <DeleteNodeDialog
         node={node}
+        onCloseMenu={onCloseMenu}
         trigger={
           <Item
             className="text-destructive focus:text-destructive"
-            onSelect={(event) => event.preventDefault()}
+            onSelect={(event) => {
+              event.preventDefault()
+              onBeforeDialogOpen?.()
+            }}
           >
             <Trash2 className="size-4" />
             Delete
