@@ -5,8 +5,8 @@ import { matchesSearchQuery } from "@/lib/localeHelpers"
 import { useDataRoomStore } from "@/store/dataRoomStore"
 import type { DataRoomNode, FileNode } from "@/types/dataRoom"
 import { Search } from "lucide-react"
-import { useEffect, useMemo, useRef, useState } from "react"
-import { PdfPreviewDialog } from "../../file/PdfPreviewDialog/PdfPreviewDialog"
+import { useEffect, useMemo, useRef, useState, useCallback } from "react"
+import { FilePreviewDialog } from "../../file/FilePreviewDialog/FilePreviewDialog"
 import { DataRoomSearchResult } from "./DataRoomSearchResult"
 import { DataRoomMobileSearchField } from "./DataRoomMobileSearchField"
 
@@ -32,6 +32,11 @@ export function DataRoomSearch({ isMobileOpen, onMobileOpenChange }: DataRoomSea
   const desktopRef = useRef<HTMLDivElement>(null)
   const mobileInputRef = useRef<HTMLInputElement>(null)
 
+  const closeMobileSearch = useCallback((): void => {
+    setSearchQuery("")
+    onMobileOpenChange(false)
+  }, [onMobileOpenChange])
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (desktopRef.current && !desktopRef.current.contains(event.target as Node)) {
@@ -52,14 +57,15 @@ export function DataRoomSearch({ isMobileOpen, onMobileOpenChange }: DataRoomSea
       document.removeEventListener("mousedown", handleClickOutside)
       document.removeEventListener("keydown", handleKeyDown)
     }
-  }, [])
+  }, [closeMobileSearch])
 
   useEffect(() => {
     if (isMobileOpen) {
       const timer = window.setTimeout(() => mobileInputRef.current?.focus(), 50)
       return () => window.clearTimeout(timer)
     } else {
-      setSearchQuery("")
+      const timer = window.setTimeout(() => setSearchQuery(""), 0)
+      return () => window.clearTimeout(timer)
     }
   }, [isMobileOpen])
 
@@ -92,11 +98,6 @@ export function DataRoomSearch({ isMobileOpen, onMobileOpenChange }: DataRoomSea
   const handleSearchChange = (value: string): void => {
     setSearchQuery(value)
     if (!isMobile) setIsDesktopOpen(true)
-  }
-
-  const closeMobileSearch = (): void => {
-    setSearchQuery("")
-    onMobileOpenChange(false)
   }
 
   return (
@@ -168,7 +169,7 @@ export function DataRoomSearch({ isMobileOpen, onMobileOpenChange }: DataRoomSea
       )}
 
       {selectedNode && (
-        <PdfPreviewDialog
+        <FilePreviewDialog
           key={selectedNode.id}
           node={selectedNode}
           open={previewOpen}

@@ -13,7 +13,7 @@ interface FilePreviewDialogProps {
 export function FilePreviewDialog({ node, open, onOpenChange }: FilePreviewDialogProps) {
   const { url, isLoading, error, handleOpenChange } = useFilePreload({ node, open, onOpenChange })
 
-  const isImage = Boolean(node && SUPPORTED_IMAGE_MIME_TYPES.has(node.mimeType))
+  const isSupportedImage: boolean = Boolean(node && SUPPORTED_IMAGE_MIME_TYPES.has(node.mimeType))
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -27,7 +27,7 @@ export function FilePreviewDialog({ node, open, onOpenChange }: FilePreviewDialo
               <Loader2 className="animate-spin" />
             </div>
           )}
-          {!isLoading && url && isImage && (
+          {!isLoading && url && isSupportedImage && (
             <div className="absolute inset-0 flex items-center justify-center p-4">
               <img
                 src={url}
@@ -36,7 +36,7 @@ export function FilePreviewDialog({ node, open, onOpenChange }: FilePreviewDialo
               />
             </div>
           )}
-          {!isLoading && url && !isImage && (
+          {!isLoading && url && !isSupportedImage && (
             <iframe src={`${url}#toolbar=0`} className="w-full h-full border-0" title={node?.name} />
           )}
           {!isLoading && error && (

@@ -8,11 +8,18 @@ export const useMediaQuery = (query: string): boolean => {
 
   useEffect(() => {
     const mediaQueryList = window.matchMedia(query)
-    setMatches(mediaQueryList.matches)
+    
+    const timer = window.setTimeout(() => {
+      setMatches(mediaQueryList.matches)
+    }, 0)
 
     const listener = (event: MediaQueryListEvent) => setMatches(event.matches)
     mediaQueryList.addEventListener("change", listener)
-    return () => mediaQueryList.removeEventListener("change", listener)
+    
+    return () => {
+      window.clearTimeout(timer)
+      mediaQueryList.removeEventListener("change", listener)
+    }
   }, [query])
 
   return matches

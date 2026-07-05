@@ -1,4 +1,4 @@
-import { openDB } from "idb"
+import { openDB, type IDBPDatabase } from "idb"
 
 import { isQuotaExceededError } from "@/lib/storageHelpers"
 
@@ -24,7 +24,7 @@ export const testBlobDbAccess = async (): Promise<void> => {
   await database.delete(STORE_NAME, TEST_BLOB_ID)
 }
 
-const getBlobDb = (): Promise<any> => {
+const getBlobDb = (): Promise<IDBPDatabase<unknown>> => {
   return openDB(DB_NAME, DB_VERSION, {
     upgrade(database) {
       if (!database.objectStoreNames.contains(STORE_NAME)) {

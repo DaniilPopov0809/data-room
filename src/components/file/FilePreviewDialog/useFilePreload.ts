@@ -42,17 +42,17 @@ export const useFilePreload = ({
     if (!open) return
 
     if (!node) {
-      setError("File not found")
-      return
+      const timer = window.setTimeout(() => setError("File not found"), 0)
+      return () => window.clearTimeout(timer)
     }
 
-    setError(null)
     const currentNode = node
     let active = true
 
     const loadFile = async (): Promise<void> => {
       setIsLoading(true)
       setUrl(null)
+      setError(null)
 
       try {
         const blob = await getBlob(currentNode.blobId)
