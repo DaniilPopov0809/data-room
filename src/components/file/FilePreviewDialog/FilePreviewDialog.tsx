@@ -19,7 +19,9 @@ export function FilePreviewDialog({ node, open, onOpenChange }: FilePreviewDialo
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-4xl sm:max-w-4xl w-[calc(100vw-20px)] h-[80vh] flex flex-col pt-8 pb-6 px-3 rounded-lg">
         <DialogHeader>
-          <DialogTitle className="truncate">{node?.name ?? "Preview"}</DialogTitle>
+          <DialogTitle className="w-full max-w-full min-w-0 truncate">
+            {node?.name ?? "Preview"}
+          </DialogTitle>
         </DialogHeader>
         <div className="flex-1 w-full h-full min-h-0 bg-muted relative rounded-md overflow-hidden border">
           {isLoading && (

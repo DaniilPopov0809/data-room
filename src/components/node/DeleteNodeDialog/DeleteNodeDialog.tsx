@@ -27,11 +27,28 @@ export function DeleteNodeDialog({ node, trigger, onCloseMenu }: DeleteNodeDialo
       <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete {node.name}?</AlertDialogTitle>
-          <AlertDialogDescription>
-            {node.type === "folder" && counts
-              ? `This folder contains ${counts.folders} folders, ${counts.files} files. This action cannot be undone.`
-              : "This action cannot be undone."}
+          <AlertDialogTitle>
+            Delete {node.type === "folder" ? "folder" : "file"}?
+          </AlertDialogTitle>
+          <AlertDialogDescription className="text-left sm:text-left">
+            {node.type === "folder" && counts ? (
+              <>
+                Are you sure you want to delete{" "}
+                <span className="font-semibold text-foreground break-all">
+                  &ldquo;{node.name}&rdquo;
+                </span>
+                ? This folder contains {counts.folders} folders, {counts.files} files. This action
+                cannot be undone.
+              </>
+            ) : (
+              <>
+                Are you sure you want to delete{" "}
+                <span className="font-semibold text-foreground break-all">
+                  &ldquo;{node.name}&rdquo;
+                </span>
+                ? This action cannot be undone.
+              </>
+            )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
