@@ -1,6 +1,7 @@
 import type { DataRoomNode } from "@/types/dataRoom"
 
 import { validatePdfBlob } from "@/lib/pdfHelpers"
+import { validateImageBlob } from "@/lib/imageHelpers"
 
 export const SUPPORTED_IMAGE_EXTENSIONS: ReadonlySet<string> = new Set([
   "webp",
@@ -135,6 +136,10 @@ export const isSupportedFile = async (
   }
 
   if (isImage(file)) {
+    const validation = await validateImageBlob(file)
+    if (validation.ok === false) {
+      return { ok: false, error: validation.error }
+    }
     return { ok: true, type: "image" }
   }
 

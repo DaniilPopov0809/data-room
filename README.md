@@ -4,6 +4,8 @@
 
 A virtual Data Room for secure document storage and organization. The project is implemented as a Single Page Application (SPA) as part of a technical assessment.
 
+![Data Room MVP Preview](./public/screenshots/app-view.jpg)
+
 ---
 
 ## Quick Start
@@ -100,13 +102,12 @@ This prevents abandoned files from accumulating, for example if the browser tab 
 
 The application supports **PDF files** and **images** (webp, png, jpg/jpeg, tiff).
 
-### PDF Signature Validation
+### File Signature Validation
 
-The application validates not only the MIME type but also the **magic bytes** of each uploaded PDF file.
+The application validates not only the MIME type but also the **magic bytes** of each uploaded file to prevent security issues and corruption (e.g., files with a renamed extension):
 
-The first four bytes are checked against the PDF signature (`%PDF`, hex `25 50 44 46`), preventing files with a renamed `.pdf` extension from being accepted.
-
-Image files are validated using MIME type and file extension only — no magic-byte check is applied.
+- **PDF**: Checks for the signature (`%PDF-`, hex `25 50 44 46 2D`) at the beginning and the `%%EOF` marker at the tail of the file.
+- **Images**: Checks for the official magic bytes of supported formats (PNG, JPEG, WebP, TIFF) at the start of the file.
 
 ### File Size Limit
 
@@ -202,6 +203,8 @@ If the app is open in two tabs, both write to IndexedDB independently while each
 
 ## Project Structure
 
+## Project Structure
+
 ```text
 src/
   components/
@@ -213,7 +216,6 @@ src/
 
   store/
     dataRoomStore.ts   # metadata + UI state (Zustand + idb-keyval)
-    conflictStore.ts   # filename conflict queue
 
   db/
     blobStore.ts       # single IndexedDB entry point
@@ -222,8 +224,6 @@ src/
     useCurrentFolder.ts
     useFileUpload.ts
     useUrlSync.ts
-    useStorageInit.ts  # storage availability check on startup
-    useTabSync.ts      # cross-tab metadata sync
     useDebounce.ts
     useMediaQuery.ts
 
@@ -234,11 +234,11 @@ src/
     formatHelpers.ts   # formatFileSize, formatDate
     downloadHelper.ts  # downloadNode
     storageHelpers.ts  # quota estimate, incognito detection, QuotaExceededError
-    tabSyncHelpers.ts  # BroadcastChannel helpers
 
   types/
-    dataRoom.ts        # FolderNode, FileNode, DataRoomNode, SortOption, ...
+    dataRoom.ts        # common types
 ```
+  
 
 ### Why Not FSD / Feature-Based Architecture
 

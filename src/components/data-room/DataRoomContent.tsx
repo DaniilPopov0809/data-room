@@ -2,7 +2,7 @@ import { DataRoomToolbar } from "@/components/data-room/DataRoomToolbar"
 import { NodeGrid } from "@/components/node/NodeGrid"
 import { NodeList } from "@/components/node/NodeList"
 import { Dropzone } from "@/components/file/Dropzone/Dropzone"
-import { useCurrentFolderContext } from "@/contexts/CurrentFolderContext"
+import { useCurrentFolderContext } from "@/contexts/useCurrentFolderContext"
 import { getTypeFilterLabel } from "@/lib/filterHelpers"
 import { useDataRoomStore } from "@/store/dataRoomStore"
 

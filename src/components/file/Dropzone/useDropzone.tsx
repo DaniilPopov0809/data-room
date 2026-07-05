@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { useFileUpload } from "@/hooks/useFileUpload"
-import { useCurrentFolderContext } from "@/contexts/CurrentFolderContext"
+import { useCurrentFolderContext } from "@/contexts/useCurrentFolderContext"
 import { useDataRoomStore } from "@/store/dataRoomStore"
 
 export const useDropzone = (): {
